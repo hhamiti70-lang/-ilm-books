@@ -10,10 +10,13 @@ const db = window.supabase.createClient(
   SUPABASE_PUBLISHABLE_KEY
 );
 
+// Website elements
 const grid = document.querySelector("#bookGrid");
 const categoryFilter = document.querySelector("#categoryFilter");
 const priceFilter = document.querySelector("#priceFilter");
 const searchInput = document.querySelector("#searchInput");
+const resultCount = document.querySelector("#resultCount");
+const categoryGrid = document.querySelector("#categoryGrid");
 
 let books = [];
 
@@ -22,6 +25,7 @@ const colors = [
   "#a17b3e", "#62537c", "#47736b"
 ];
 
+// Safely display text
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -32,111 +36,147 @@ function escapeHTML(value) {
   })[char]);
 }
 
+// Format book price
 function money(book) {
-  return book.is_free 
-    ? "Free"
-    : `KSh ${Number(book.price_kes).toLocaleString()}`;
+  if (book.is_free) return "Free";
+
+  return `KSh ${Number(book.price_kes).toLocaleString()}`;
 }
 
-// Retrieve published books from Supabase
+// Load published books from Supabase
 async function loadBooks() {
-  grid.innerHTML = '<p>Loading books...</p>';
-
-  const { data, error } = await db
-    .from("books")
-    .select("id, title, description, category, language, price_kes, is_free, authors(name)")
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Supabase error:", error);
-    grid.innerHTML =
-      '<p class="empty-state">Unable to load books. Please try again later.</p>';
-    document.querySelector("#resultCount").textContent = "Connection error";
+  if (!grid) {
+    console.error("ILM Books: #bookGrid was not found in index.html.");
     return;
   }
 
-  books = data || [];
+  grid.innerHTML = "<p>Loading books...</p>";
 
-  // Populate categories from real books
-  const categories = [...new Set(
-    books.map(book => book.category).filter(Boolean)
-  )].sort();
+  try {
+    const { data, error } = await db
+      .from("books")
+      .select(`
+        id,
+        title,
+        description,
+        category,
+        language,
+        price_kes,
+        is_free,
+        authors(name)
+      `)
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
 
-  categoryFilter.innerHTML =
-    '<option value="all">All categories</option>';
+    if (error) throw error;
 
-  categories.forEach(category => {
-    categoryFilter.add(
-      new Option(category, category)
-    );
-  });
+    books = data || [];
 
-  renderBooks();
+    // Populate category filter
+    if (categoryFilter) {
+      const categories = [...new Set(
+        books.map(book => book.category).filter(Boolean)
+      )].sort();
+
+      categoryFilter.innerHTML =
+        '<option value="all">All categories</option>';
+
+      categories.forEach(category => {
+        categoryFilter.add(new Option(category, category));
+      });
+    }
+
+    renderBooks();
+    renderCategories();
+
+  } catch (error) {
+    console.error("ILM Books Supabase error:", error);
+
+    grid.textContent =
+      "Unable to load books: " + (error.message || "Unknown error");
+
+    if (resultCount) {
+      resultCount.textContent = "Loading failed";
+    }
+  }
 }
 
-// Display books
+// Display and filter books
 function renderBooks() {
-  const term = searchInput.value.trim().toLowerCase();
-  const category = categoryFilter.value;
-  const price = priceFilter.value;
+  if (!grid) return;
+
+  const term = searchInput?.value.trim().toLowerCase() || "";
+  const category = categoryFilter?.value || "all";
+  const price = priceFilter?.value || "all";
 
   const filtered = books.filter(book => {
     const author = book.authors?.name || "Unknown author";
 
     return (
       (category === "all" || book.category === category) &&
-      (price === "all" ||
+      (
+        price === "all" ||
         (price === "free" && book.is_free) ||
-        (price === "paid" && !book.is_free)) &&
-      `${book.title} ${author} ${book.category || ""}`
-        .toLowerCase().includes(term)
+        (price === "paid" && !book.is_free)
+      ) &&
+      `${book.title || ""} ${author} ${book.category || ""}`
+        .toLowerCase()
+        .includes(term)
     );
   });
 
-  document.querySelector("#resultCount").textContent =
-    `${filtered.length} books`;
+  if (resultCount) {
+    resultCount.textContent = `${filtered.length} books`;
+  }
 
-  grid.innerHTML = filtered.length
-    ? filtered.map((book, index) => {
-        const title = escapeHTML(book.title);
-        const author = escapeHTML(
-          book.authors?.name || "Unknown author"
-        );
-        const categoryName = escapeHTML(
-          book.category || "General"
-        );
-        const initial = escapeHTML(
-          book.title.slice(0, 12).toUpperCase()
-        );
-        const color = colors[index % colors.length];
+  if (filtered.length === 0) {
+    grid.innerHTML =
+      '<div class="empty-state">No published books found yet.</div>';
+    return;
+  }
 
-        return `
-          <article class="book-card">
-            <div class="book-cover" style="background:${color}">
-              <strong>${initial}</strong>
-            </div>
-            <div class="book-info">
-              <span class="book-tag">
-                ${book.is_free ? "FREE" : "PAID"}
-              </span>
-              <h3>${title}</h3>
-              <p class="book-author">
-                by ${author} · ${categoryName}
-              </p>
-              <div class="book-bottom">
-                <span class="price">${money(book)}</span>
-                <span>${escapeHTML(book.language || "English")}</span>
-              </div>
-            </div>
-          </article>
-        `;
-      }).join("")
-    : '<div class="empty-state">No published books found yet.</div>';
+  grid.innerHTML = filtered.map((book, index) => {
+    const title = escapeHTML(book.title || "Untitled book");
+    const author = escapeHTML(
+      book.authors?.name || "Unknown author"
+    );
+    const categoryName = escapeHTML(book.category || "General");
+    const initial = escapeHTML(
+      (book.title || "Book").slice(0, 12).toUpperCase()
+    );
+    const color = colors[index % colors.length];
+
+    return `
+      <article class="book-card">
+        <div class="book-cover" style="background:${color}">
+          <strong>${initial}</strong>
+        </div>
+
+        <div class="book-info">
+          <span class="book-tag">
+            ${book.is_free ? "FREE" : "PAID"}
+          </span>
+
+          <h3>${title}</h3>
+
+          <p class="book-author">
+            by ${author} · ${categoryName}
+          </p>
+
+          <div class="book-bottom">
+            <span class="price">${money(book)}</span>
+            <span>${escapeHTML(book.language || "English")}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
-// Categories
+// Display categories
 function renderCategories() {
+  if (!categoryGrid) return;
+
   const categories = [...new Set(
     books.map(book => book.category).filter(Boolean)
   )].sort();
@@ -149,68 +189,81 @@ function renderCategories() {
     Science: "⚗"
   };
 
-  document.querySelector("#categoryGrid").innerHTML =
-    categories.map(category => `
-      <button class="category-tile"
-        data-category="${escapeHTML(category)}">
-        <span class="category-icon">
-          ${icons[category] || "✦"}
-        </span>
-        ${escapeHTML(category)}
-        <span>→</span>
-      </button>
-    `).join("");
+  categoryGrid.innerHTML = categories.map(category => `
+    <button class="category-tile"
+      data-category="${escapeHTML(category)}">
+      <span class="category-icon">
+        ${icons[category] || "✦"}
+      </span>
+      ${escapeHTML(category)}
+      <span>→</span>
+    </button>
+  `).join("");
 }
 
 // Search and filters
 [searchInput, categoryFilter, priceFilter]
-  .forEach(element =>
-    element.addEventListener("input", renderBooks)
-  );
+  .filter(Boolean)
+  .forEach(element => {
+    element.addEventListener("input", renderBooks);
+  });
 
 // Category selection
-document.querySelector("#categoryGrid")
-  .addEventListener("click", event => {
+if (categoryGrid) {
+  categoryGrid.addEventListener("click", event => {
     const button = event.target.closest("[data-category]");
-    if (!button) return;
+    if (!button || !categoryFilter) return;
 
     categoryFilter.value = button.dataset.category;
     renderBooks();
 
     document.querySelector("#discover")
-      .scrollIntoView({ behavior: "smooth" });
+      ?.scrollIntoView({ behavior: "smooth" });
   });
+}
 
 // Mobile navigation
-document.querySelector("#menuToggle")
-  .addEventListener("click", () => {
-    document.querySelector("#mainNav")
-      .classList.toggle("open");
+const menuToggle = document.querySelector("#menuToggle");
+const mainNav = document.querySelector("#mainNav");
+
+if (menuToggle && mainNav) {
+  menuToggle.addEventListener("click", () => {
+    mainNav.classList.toggle("open");
   });
 
-document.querySelectorAll("#mainNav a")
-  .forEach(link => {
+  mainNav.querySelectorAll("a").forEach(link => {
     link.addEventListener("click", () => {
-      document.querySelector("#mainNav")
-        .classList.remove("open");
+      mainNav.classList.remove("open");
     });
   });
+}
 
 // Newsletter placeholder
-document.querySelector("#newsletterForm")
-  .addEventListener("submit", event => {
+const newsletterForm =
+  document.querySelector("#newsletterForm");
+
+if (newsletterForm) {
+  newsletterForm.addEventListener("submit", event => {
     event.preventDefault();
 
-    document.querySelector("#newsletterMessage")
-      .textContent =
-      "Newsletter registration will be available soon.";
+    const message =
+      document.querySelector("#newsletterMessage");
 
-    event.target.reset();
+    if (message) {
+      message.textContent =
+        "Newsletter registration will be available soon.";
+    }
+
+    newsletterForm.reset();
   });
+}
 
 // Footer year
-document.querySelector("#year").textContent =
-  new Date().getFullYear();
+const year = document.querySelector("#year");
 
-// Start the application
-loadBooks().then(() => renderCategories());
+if (year) {
+  year.textContent = new Date().getFullYear();
+}
+
+// Start ILM Books
+loadBooks();
