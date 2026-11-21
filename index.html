@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d32">
+  <meta name="description" content="Discover books, ideas and knowledge without borders.">
+  <title>ILM Books — Knowledge Without Borders</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="ILM Books home"><span class="brand-mark">I</span><span>ILM <b>BOOKS</b><small>KNOWLEDGE WITHOUT BORDERS</small></span></a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
+    <nav id="mainNav">
+      <a href="#discover">Discover</a><a href="#categories">Categories</a><a href="#new">New arrivals</a>
+      <a class="nav-cta" href="#newsletter">Join the reading community</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">BOOKS · IDEAS · DISCOVERY</p>
+        <h1>Open a book.<br><em>Open a world.</em></h1>
+        <p class="hero-text">Explore stories, knowledge and fresh perspectives from around the world.</p>
+        <a class="button button-gold" href="#discover">Explore the library <span>→</span></a>
+      </div>
+      <div class="hero-art" aria-label="Decorative library illustration">
+        <div class="sun"></div><div class="book-stack"><i></i><i></i><i></i><i></i></div>
+        <div class="art-note">A world of<br>knowledge awaits.</div>
+      </div>
+    </section>
+
+    <section class="search-section" id="discover">
+      <div><p class="eyebrow">YOUR NEXT READ STARTS HERE</p><h2>Find your next favourite book</h2></div>
+      <div class="search-controls">
+        <label class="searchbox"><span>⌕</span><input id="searchInput" type="search" placeholder="Search titles, authors or topics…" aria-label="Search books"></label>
+        <select id="categoryFilter" aria-label="Filter by category"><option value="all">All categories</option></select>
+        <select id="priceFilter" aria-label="Filter by price"><option value="all">All books</option><option value="free">Free</option><option value="paid">Paid</option></select>
+      </div>
+      <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2>Featured books</h2></div><span id="resultCount" class="muted"></span></div>
+      <div class="book-grid" id="bookGrid" aria-live="polite"></div>
+    </section>
+
+    <section class="category-section" id="categories">
+      <div class="section-heading"><div><p class="eyebrow">EXPLORE BY INTEREST</p><h2>Find your subject</h2></div></div>
+      <div class="category-grid" id="categoryGrid"></div>
+    </section>
+
+    <section class="feature-band" id="new">
+      <div><p class="eyebrow">READ. LEARN. GROW.</p><h2>Good books make<br>room for new ideas.</h2><p>Build your personal library, discover new authors and keep learning at your own pace.</p></div>
+      <div class="feature-stamp"><span>ILM</span><small>KNOWLEDGE<br>WITHOUT BORDERS</small></div>
+    </section>
+
+    <section class="newsletter" id="newsletter">
+      <p class="eyebrow">STAY IN THE LOOP</p><h2>Good reads, delivered.</h2><p>Get updates about new books and reading recommendations.</p>
+      <form id="newsletterForm"><input type="email" id="emailInput" placeholder="Your email address" required><button class="button button-dark" type="submit">Join us</button></form>
+      <p class="form-message" id="newsletterMessage" role="status"></p>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand footer-brand" href="#"><span class="brand-mark">I</span><span>ILM <b>BOOKS</b><small>KNOWLEDGE WITHOUT BORDERS</small></span></a>
+    <p>© <span id="year"></span> ILM Books. Built for curious minds.</p>
+    <div><a href="mailto:hello@example.com">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
