@@ -1,7 +1,7 @@
 
 // ILM Books — Supabase connected frontend
 
-const SUPABASE_URL = "https://vhrvnoieffuocrbhoxpt.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://vhrvnoieffuocrbhoxpt.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_X5tEnStHRyqJCA8jPkaM2Q_u6Y81MGq";
 
 // Connect to Supabase
@@ -33,7 +33,7 @@ function escapeHTML(value) {
 }
 
 function money(book) {
-  return book.is_free
+  return book.is_free 
     ? "Free"
     : `KSh ${Number(book.price_kes).toLocaleString()}`;
 }
